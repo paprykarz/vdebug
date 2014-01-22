@@ -411,6 +411,7 @@ class LogWindow(Window):
 
     def on_create(self):
         self.command('setlocal syntax=debugger_log')
+        self.command('setlocal foldmethod=manual')
         if self.creation_count == 1:
             vim.command('silent! au BufWinLeave %s :silent! bdelete %s' %(self.name,self.name))
 
