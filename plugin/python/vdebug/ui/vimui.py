@@ -61,6 +61,8 @@ class Ui(vdebug.ui.interface.Ui):
             self.watchwin.set_height(vdebug.opts.Options.get('watch_window_height'))
             self.statuswin.set_height(vdebug.opts.Options.get('status_window_height'))
 
+            self.watchwin.command('setlocal foldmethod=manual')
+
             logwin = LogWindow(self,'rightbelow 6new')
             vdebug.log.Log.set_logger(\
                     vdebug.log.WindowLogger(\
@@ -410,6 +412,7 @@ class LogWindow(Window):
 
     def on_create(self):
         self.command('setlocal syntax=debugger_log')
+        self.command('setlocal foldmethod=manual')
         if self.creation_count == 1:
             vim.command('silent! au BufWinLeave %s :silent! bdelete %s' %(self.name,self.name))
 
