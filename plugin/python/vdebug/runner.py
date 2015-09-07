@@ -22,6 +22,7 @@ class Runner:
         self.breakpoints = vdebug.breakpoint.Store()
         self.keymapper = vdebug.util.Keymapper()
         self.ui = vdebug.ui.vimui.Ui(self.breakpoints)
+        self.saved_code = ''
 
     def open(self):
         """ Open the connection and debugging vdebug.ui.
@@ -83,15 +84,21 @@ class Runner:
         for name, value in features.iteritems():
             try:
                 self.api.feature_set(name, value)
-            except vdebug.dbgp.DBGPError as e:
+            except vdebug.dbgp.DBGPError, e:
                 error_str = "Failed to set feature %s: %s" %(name,str(e.args[0]))
                 self.ui.error(error_str)
 
+    def save_code(self,code):
+        """Save a code snippet for later display in the watch window.
+        """
+        self.saved_code = code
+        return code
+
     def refresh(self,status):
         """The main action performed after a deubugger step.
-    
+
         Updates the status window, current stack, source
-        file and line and watch window."""    
+        file and line and watch window."""
         if not self.is_alive():
             self.ui.error("Cannot update: no connection")
         else:
@@ -121,18 +128,35 @@ class Runner:
                         self.cur_file,\
                         self.cur_lineno)
 
-                self.get_context(0)
+                if self.saved_code != '':
+                    self.eval(self.saved_code)
+                else:
+                    self.get_context(0)
 
     def get_context(self,context_id = 0):
         self.ui.watchwin.clean()
+        self.ui.tracewin.clean()
         name = self.context_names[context_id]
         vdebug.log.Log("Getting %s variables" % name)
         context_res = self.api.context_get(context_id)
+
         rend = vdebug.ui.vimui.ContextGetResponseRenderer(\
                 context_res,"%s at %s:%s" \
                 %(name,self.ui.sourcewin.file,self.cur_lineno),\
                 self.context_names, context_id)
+
         self.ui.watchwin.accept_renderer(rend)
+
+        if self.ui.tracewin.is_tracing():
+            try:
+                context_res = self.api.eval(self.ui.tracewin.get_trace_expression())
+                rend = vdebug.ui.vimui.ContextGetResponseRenderer(\
+                        context_res,"Trace of: '%s'" \
+                        %context_res.get_code())
+                self.ui.tracewin.render(rend)
+            except vdebug.dbgp.EvalError:
+                self.ui.tracewin.render_in_error_case()
+
 
     def toggle_breakpoint_window(self):
         """Open or close the breakpoint window.
@@ -222,9 +246,38 @@ class Runner:
                 return
         self.breakpoints.add_breakpoint(bp)
 
+    def trace(self,code):
+        """Evaluate a snippet of code and show the response on the watch window.
+        """
+        if not self.is_alive():
+            self.ui.error("Tracing an expression is only possible when Vdebug is running")
+            return
+        if not code:
+            self.ui.error("You must supply an expression to trace, with `:VdebugTrace expr`")
+            return
+
+        if self.ui.tracewin.is_open:
+            self.ui.tracewin.clean()
+        else:
+            self.ui.tracewin.create()
+
+        try:
+            vdebug.log.Log("Tracing code: "+code)
+            context_res = self.api.eval(code)
+            rend = vdebug.ui.vimui.ContextGetResponseRenderer(\
+                    context_res,"Eval of: '%s'" \
+                    %context_res.get_code())
+            self.ui.tracewin.accept_renderer(rend)
+        except vdebug.dbgp.EvalError:
+            self.ui.tracewin.write('(expression not currently valid)')
+        self.ui.tracewin.set_trace_expression(code)
+
     def eval(self,code):
         """Evaluate a snippet of code and show the response on the watch window.
         """
+        if not self.is_alive():
+            self.ui.error("Evaluating code is only possible when Vdebug is running")
+            return
         try:
             vdebug.log.Log("Evaluating code: "+code)
             context_res = self.api.eval(code)
@@ -269,7 +322,7 @@ class Runner:
                 check_ide_key = True
                 if len(ide_key) == 0:
                     check_ide_key = False
-                    
+
                 connection = vdebug.dbgp.Connection(server,port,\
                         timeout,vdebug.util.InputStream())
 

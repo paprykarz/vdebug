@@ -2,11 +2,6 @@
 
 [![Build Status](https://travis-ci.org/joonty/vdebug.png?branch=master)](https://travis-ci.org/joonty/vdebug)
 
-## Important announcement
-
-*I'm looking for someone to help maintain Vdebug!* Read the following and please help if you can:
-http://blog.joncairns.com/2015/01/looking-for-another-vdebug-maintainer/
-
 ## Introduction
 
 Vdebug is a new, fast, powerful debugger client for Vim. It's multi-language,
@@ -35,26 +30,21 @@ If you're having trouble with Vdebug in any way, here are the steps you can take
 
 Follow me on Twitter, [@joonty](http://twitter.com/joonty), for Vdebug updates and release news.
 
-* **15/05/2014:** Version 1.4.2 was released. This fixes major problems with the latest version of Vim, which has stricter rules around function naming. See [this pull request for more details][5]
+* **07/09/2015:** Version 1.5.1 released. This adds a `:VdebugEval!` command and fixes issues with buffers not being wiped out. See below for more information.
+* **26/08/2015:** Version 1.5.0 released. This has a whole series of fixes and even a couple of new features.
+* **15/05/2014:** Version 1.4.2 released. This fixes major problems with the latest version of Vim, which has stricter rules around function naming. See [this pull request for more details][5]
 * **12/04/2014:** My son was born! Hence no contact or work on Vdebug for the following month.
 
-
-## Recent version (version 1.4.2)
+## Recent version (version 1.5.1)
 
 ### Bug fixes:
- * Allow overriding of options dictionary after sourcing vdebug (issues #112, #113)
- * Show local file path in stack window if using path mapping (issue #118)
- * Change function names for stricter rules introduced in Vim v.7.4.260 (thanks @BlackEagle, #158 and #155)
-
-### Documentation:
- * Various fixes
- * Mention vim-nox package for Debian (thanks @henningda, #138)
- * Add Python installation for Windows information (issue #135)
+ * Fix buffers not being wiped out after ending a session (thanks @BlackIkeEagle, #226)
 
 ### Features:
- * Add completion to :Breakpoint command (thanks @tommcdo, #124)
- * Add VdebugStart command (thanks @blueyed, #132)
- * Sleep for 100ms in wait loop, don't consume as much CPU (thanks @blueyed, #133)
+ * Add :VdebugEval! command, which remembers the eval expression when stepping
+ through, as an alternative to :VdebugTrace (thanks @benjifisher, #193)
+
+See the CHANGELOG for the full history of changes.
 
 ## How to use
 
@@ -95,7 +85,7 @@ where the path supplied is vdebug's doc directory. This should enable vdebug's h
 
 **Requirements**:
 
-  * Vim compiled with Python 2.6+ support, tabs and signs (for Debian/Ubuntu this is provided in the vim-nox package)
+  * Vim compiled with Python 2.4+ support, tabs and signs (for Debian/Ubuntu this is provided in the vim-nox package)
   * A programming language that has a DBGP debugger, e.g. PHP, Python, Ruby,
     Perl, NodeJS, Tcl...
 
@@ -135,7 +125,7 @@ Once in debugging mode, the following default mappings are available:
  * `<F2>`: step over
  * `<F3>`: step into
  * `<F4>`: step out
- * `<F6>`: stop debugging
+ * `<F6>`: stop debugging (kills script)
  * `<F7>`: detach script from debugger
  * `<F9>`: run to cursor
  * `<F10>`: toggle line breakpoint
